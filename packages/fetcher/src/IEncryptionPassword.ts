@@ -42,9 +42,15 @@ export namespace IEncryptionPassword {
   /**
    * Properties for the closure.
    */
-  export interface IProps {
+  export type IProps = IDecodeProps | IEncodeProps;
+  export interface IDecodeProps {
+    headers: Record<string, IConnection.HeaderValue | undefined>;
+    body: Uint8Array;
+    direction: "decode";
+  }
+  export interface IEncodeProps {
     headers: Record<string, IConnection.HeaderValue | undefined>;
     body: string;
-    direction: "encode" | "decode";
+    direction: "encode";
   }
 }

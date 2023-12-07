@@ -9,12 +9,15 @@ export class Backend {
   private application_?: NestFastifyApplication;
 
   public async open(): Promise<void> {
+    const adaptor = new FastifyAdapter();
+    adaptor.useBodyParser("application/octet-stream", true);
+
     this.application_ = await NestFactory.create(
       await core.EncryptedModule.dynamic(__dirname + "/controllers", {
         key: "A".repeat(32),
         iv: "B".repeat(16),
       }),
-      new FastifyAdapter(),
+      adaptor,
       { logger: false },
     );
     await this.application_.listen(37_000);

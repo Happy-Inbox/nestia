@@ -1,4 +1,4 @@
-import { Singleton } from "tstl";
+import { Singleton, VariadicSingleton } from "tstl";
 import ts from "typescript";
 import { IJsonSchema } from "typia";
 import { MetadataCollection } from "typia/lib/factories/MetadataCollection";
@@ -370,32 +370,33 @@ export namespace SwaggerSchemaGenerator {
   };
 }
 
-const warning = new Singleton((described: boolean) => {
-  return new Singleton((type: "request" | "response", method?: string) => {
-    const summary =
-      type === "request"
-        ? "Request body must be encrypted."
-        : "Response data have been encrypted.";
-    const component =
-      type === "request"
-        ? "[EncryptedBody](https://github.com/samchon/@nestia/core#encryptedbody)"
-        : `[EncryptedRoute.${method![0].toUpperCase()}.${method!
-            .substring(1)
-            .toLowerCase()}](https://github.com/samchon/@nestia/core#encryptedroute)`;
+const warning = new VariadicSingleton(
+  (described: boolean) =>
+    new Singleton((type: "request" | "response", method?: string) => {
+      const summary =
+        type === "request"
+          ? "Request body must be encrypted."
+          : "Response data have been encrypted.";
+      const component =
+        type === "request"
+          ? "[EncryptedBody](https://github.com/samchon/@nestia/core#encryptedbody)"
+          : `[EncryptedRoute.${method![0].toUpperCase()}.${method!
+              .substring(1)
+              .toLowerCase()}](https://github.com/samchon/@nestia/core#encryptedroute)`;
 
-    const content: string[] = [
-      "## Warning",
-      "",
-      summary,
-      "",
-      `The ${type} body data would be encrypted as "AES-128(256) / CBC mode / PKCS#5 Padding / Base64 Encoding", through the ${component} component.`,
-      "",
-      `Therefore, just utilize this swagger editor only for referencing. If you need to call the real API, using [SDK](https://github.com/samchon/nestia#software-development-kit) would be much better.`,
-    ];
-    if (described === true) content.push("----------------", "");
-    return content.join("\n");
-  });
-});
+      const content: string[] = [
+        "## Warning",
+        "",
+        summary,
+        "",
+        `The ${type} body data would be encrypted as "AES-128(256) / CBC mode / PKCS#5 Padding / Base64 Encoding", through the ${component} component.`,
+        "",
+        `Therefore, just utilize this swagger editor only for referencing. If you need to call the real API, using [SDK](https://github.com/samchon/nestia#software-development-kit) would be much better.`,
+      ];
+      if (described === true) content.push("", "----------------", "", "");
+      return content.join("\n");
+    }),
+);
 
 const any = new Singleton(() =>
   Metadata.from(

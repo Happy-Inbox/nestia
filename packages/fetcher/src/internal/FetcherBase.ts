@@ -13,9 +13,9 @@ export namespace FetcherBase {
     encode: (
       input: any,
       headers: Record<string, IConnection.HeaderValue | undefined>,
-    ) => string;
+    ) => string | Uint8Array;
     decode: (
-      input: string,
+      input: string | Uint8Array,
       headers: Record<string, IConnection.HeaderValue | undefined>,
     ) => any;
   }
@@ -103,7 +103,8 @@ export namespace FetcherBase {
           // BODY TRANSFORM
           route.request?.type === "application/x-www-form-urlencoded"
             ? request_query_body(input)
-            : route.request?.type !== "text/plain"
+            : route.request?.type !== "application/octet-stream" &&
+              route.request?.type !== "text/plain"
             ? (stringify ?? JSON.stringify)(input)
             : input,
           headers,
@@ -160,8 +161,12 @@ export namespace FetcherBase {
             await response.text(),
           );
           result.data = route.parseQuery ? route.parseQuery(query) : query;
-        } else
-          result.data = props.decode(await response.text(), result.headers);
+        } else if (route.response?.type === "application/octet-stream")
+          result.data = props.decode(
+            new Uint8Array(await response.arrayBuffer()),
+            result.headers,
+          );
+        else result.data = await response.text();
       }
       return result;
     };

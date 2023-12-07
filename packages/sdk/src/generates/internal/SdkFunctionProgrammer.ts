@@ -56,7 +56,7 @@ export namespace SdkFunctionProgrammer {
       const contentType: string | undefined =
         props.input !== undefined
           ? (props.input as IController.IBodyParameter).encrypted
-            ? "text/plain"
+            ? "application/octet-stream"
             : (props.input as IController.IBodyParameter).contentType ??
               "application/json"
           : undefined;
@@ -359,7 +359,7 @@ export namespace SdkFunctionProgrammer {
                 `request: {`,
                 `    type: "${
                   (props.input as IController.IBodyParameter).encrypted
-                    ? "text/plain"
+                    ? "application/octet-stream"
                     : (props.input as IController.IBodyParameter).contentType ??
                       "application/json"
                 }",`,

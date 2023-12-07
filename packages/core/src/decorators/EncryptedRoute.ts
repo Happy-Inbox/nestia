@@ -1,5 +1,5 @@
-import { AesPkcs5 } from "@nestia/fetcher/lib/AesPkcs5";
 import { IEncryptionPassword } from "@nestia/fetcher/lib/IEncryptionPassword";
+import { AesPkcs5 } from "@nestia/fetcher/lib/internal/AesPkcs5";
 import {
   CallHandler,
   Delete,
@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 import { HttpArgumentsHost } from "@nestjs/common/interfaces";
 import express from "express";
+import type { FastifyRequest } from "fastify";
 import { catchError, map } from "rxjs/operators";
 import typia from "typia";
 
@@ -129,10 +130,15 @@ for (const method of [
  * @internal
  */
 class EncryptedRouteInterceptor implements NestInterceptor {
+  private readonly success: number;
+
   public constructor(
     private readonly method: string,
     private readonly stringify: (input: any) => string,
-  ) {}
+  ) {
+    this.success =
+      this.method === "GET" || this.method === "DELETE" ? 200 : 201;
+  }
 
   public intercept(context: ExecutionContext, next: CallHandler) {
     const http: HttpArgumentsHost = context.switchToHttp();
@@ -152,21 +158,29 @@ class EncryptedRouteInterceptor implements NestInterceptor {
           const request: express.Request = http.getRequest();
           return headers_to_object(request.headers);
         });
-        const body: string | undefined = this.stringify(value);
-        const password: IEncryptionPassword =
-          typeof param === "function"
-            ? param({
-                headers: headers.get(),
-                body,
-                direction: "encode",
-              })
-            : param;
+        const body: Uint8Array = (() => {
+          const body = this.stringify(value);
+          if (body === undefined) return Buffer.from([]);
 
+          const password: IEncryptionPassword =
+            typeof param === "function"
+              ? param({
+                  body,
+                  direction: "encode",
+                  headers: headers.get(),
+                })
+              : param;
+          return AesPkcs5.encrypt(body, password.key, password.iv);
+        })();
+        // return body;
         const response: express.Response = http.getResponse();
-        response.header("Content-Type", "text/plain");
-
-        if (body === undefined) return body;
-        return AesPkcs5.encrypt(body, password.key, password.iv);
+        if (isExpressRequest(http.getRequest()))
+          response
+            .header("Content-Type", "application/octet-stream")
+            .status(this.success)
+            .send(body)
+            .end();
+        return body;
       }),
       catchError((err) => route_error(http.getRequest(), err)),
     );
@@ -183,3 +197,10 @@ const ROUTERS = {
   Patch,
   Delete,
 };
+
+/**
+ * @internal
+ */
+const isExpressRequest = (
+  request: express.Request | FastifyRequest,
+): request is express.Request => (request as express.Request).app !== undefined;

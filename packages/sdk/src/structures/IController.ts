@@ -27,7 +27,11 @@ export namespace IController {
     parameters: IParameter[];
     status?: number;
     type?: string;
-    contentType: "application/json" | "text/plain";
+    contentType:
+      | "application/json"
+      | "application/octet-stream"
+      | "application/x-www-form-urlencoded"
+      | "text/plain";
     security: Record<string, string[]>[];
     exceptions: Record<
       number | "2XX" | "3XX" | "4XX" | "5XX",

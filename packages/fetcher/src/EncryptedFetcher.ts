@@ -1,8 +1,8 @@
-import { AesPkcs5 } from "./AesPkcs5";
 import { IConnection } from "./IConnection";
 import { IEncryptionPassword } from "./IEncryptionPassword";
 import { IPropagation } from "./IPropagation";
 import { Primitive } from "./Primitive";
+import { AesPkcs5 } from "./internal/AesPkcs5";
 import { FetcherBase } from "./internal/FetcherBase";
 import { IFetchRoute } from "./internal/IFetchRoute";
 
@@ -77,29 +77,34 @@ export namespace EncryptedFetcher {
         ? (direction: "encode" | "decode") =>
             (
               headers: Record<string, IConnection.HeaderValue | undefined>,
-              body: string,
+              body: string | Uint8Array,
             ) =>
               (connection.encryption as IEncryptionPassword.Closure)({
                 headers,
-                body,
+                body: body as any,
                 direction,
               })
         : () => () => connection.encryption as IEncryptionPassword;
-
     return FetcherBase.fetch({
       className: "EncryptedFetcher",
       encode:
         route.request?.encrypted === true
           ? (input, headers) => {
               const p = closure("encode")(headers, input);
-              return AesPkcs5.encrypt(JSON.stringify(input), p.key, p.iv);
+              return AesPkcs5.encrypt(
+                (stringify ?? JSON.stringify)(input),
+                p.key,
+                p.iv,
+              );
             }
           : (input) => input,
       decode:
         route.response?.encrypted === true
           ? (input, headers) => {
-              const p = closure("decode")(headers, input);
-              const str = AesPkcs5.decrypt(input, p.key, p.iv);
+              const p: IEncryptionPassword = closure("decode")(headers, input);
+              const str: string = new TextDecoder().decode(
+                AesPkcs5.decrypt(input as Uint8Array, p.key, p.iv),
+              );
               return str.length ? JSON.parse(str) : str;
             }
           : (input) => input,
@@ -136,29 +141,36 @@ export namespace EncryptedFetcher {
         ? (direction: "encode" | "decode") =>
             (
               headers: Record<string, IConnection.HeaderValue | undefined>,
-              body: string,
+              body: string | Uint8Array,
             ) =>
               (connection.encryption as IEncryptionPassword.Closure)({
                 headers,
-                body,
+                body: body as any,
                 direction,
               })
         : () => () => connection.encryption as IEncryptionPassword;
-
     return FetcherBase.propagate({
       className: "EncryptedFetcher",
       encode:
         route.request?.encrypted === true
           ? (input, headers) => {
               const p = closure("encode")(headers, input);
-              return AesPkcs5.encrypt(JSON.stringify(input), p.key, p.iv);
+              return AesPkcs5.encrypt(
+                (stringify ?? JSON.stringify)(input),
+                p.key,
+                p.iv,
+              );
             }
           : (input) => input,
       decode:
         route.response?.encrypted === true
           ? (input, headers) => {
-              const p = closure("decode")(headers, input);
-              const str = AesPkcs5.decrypt(input, p.key, p.iv);
+              const binary: Uint8Array = input as Uint8Array;
+              const p: IEncryptionPassword = closure("decode")(headers, binary);
+              if (!binary.length) return;
+              const str: string = new TextDecoder().decode(
+                AesPkcs5.decrypt(binary, p.key, p.iv),
+              );
               return str.length ? JSON.parse(str) : str;
             }
           : (input) => input,

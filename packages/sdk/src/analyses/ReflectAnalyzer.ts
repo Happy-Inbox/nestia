@@ -280,7 +280,7 @@ export namespace ReflectAnalyzer {
         status: Reflect.getMetadata(Constants.HTTP_CODE_METADATA, proto),
         encrypted,
         contentType: encrypted
-          ? "text/plain"
+          ? "application/octet-stream"
           : query
           ? "application/x-www-form-urlencoded"
           : Reflect.getMetadata(Constants.HEADERS_METADATA, proto)?.find(

@@ -19,15 +19,19 @@ export namespace AesPkcs5 {
    * @param iv Initializer Vector for the encryption
    * @return Encrypted data
    */
-  export function encrypt(data: string, key: string, iv: string): string {
+  export const encrypt = (
+    data: string | Uint8Array,
+    key: string,
+    iv: string,
+  ): Uint8Array => {
     const bytes: number = key.length * 8;
     const cipher: crypto.Cipher = crypto.createCipheriv(
       `AES-${bytes}-CBC`,
       key,
       iv,
     );
-    return cipher.update(data, "utf8", "base64") + cipher.final("base64");
-  }
+    return concat(cipher.update(data), cipher.final());
+  };
 
   /**
    * Decrypt data.
@@ -37,14 +41,26 @@ export namespace AesPkcs5 {
    * @param iv Initializer Vector for the decryption
    * @return Decrypted data.
    */
-  export function decrypt(data: string, key: string, iv: string): string {
+  export const decrypt = (
+    data: Uint8Array,
+    key: string,
+    iv: string,
+  ): Uint8Array => {
     const bytes: number = key.length * 8;
     const decipher: crypto.Decipher = crypto.createDecipheriv(
       `AES-${bytes}-CBC`,
       key,
       iv,
     );
+    return concat(decipher.update(data), decipher.final());
+  };
 
-    return decipher.update(data, "base64", "utf8") + decipher.final("utf8");
-  }
+  /**
+   * @internal
+   */
+  const concat = (x: Buffer, y: Buffer): Buffer => {
+    if (x.length === 0) return y;
+    if (y.length === 0) return x;
+    return Buffer.concat([x, y]);
+  };
 }

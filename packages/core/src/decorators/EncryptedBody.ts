@@ -1,5 +1,5 @@
-import { AesPkcs5 } from "@nestia/fetcher/lib/AesPkcs5";
 import { IEncryptionPassword } from "@nestia/fetcher/lib/IEncryptionPassword";
+import { AesPkcs5 } from "@nestia/fetcher/lib/internal/AesPkcs5";
 import {
   BadRequestException,
   ExecutionContext,
@@ -12,7 +12,7 @@ import { assert, is, validate } from "typia";
 import { IRequestBodyValidator } from "../options/IRequestBodyValidator";
 import { Singleton } from "../utils/Singleton";
 import { ENCRYPTION_METADATA_KEY } from "./internal/EncryptedConstant";
-import { get_text_body } from "./internal/get_text_body";
+import { get_binary_body } from "./internal/get_binary_body";
 import { headers_to_object } from "./internal/headers_to_object";
 import { validate_request_body } from "./internal/validate_request_body";
 
@@ -48,8 +48,10 @@ export function EncryptedBody<T>(
     const request: express.Request | FastifyRequest = context
       .switchToHttp()
       .getRequest();
-    if (isTextPlain(request.headers["content-type"]) === false)
-      throw new BadRequestException(`Request body type is not "text/plain".`);
+    if (isApplicationOctetStream(request.headers["content-type"]) === false)
+      throw new BadRequestException(
+        `Request body type is not "application/octet-stream".`,
+      );
 
     const param: IEncryptionPassword | IEncryptionPassword.Closure | undefined =
       Reflect.getMetadata(ENCRYPTION_METADATA_KEY, context.getClass());
@@ -62,14 +64,17 @@ export function EncryptedBody<T>(
     const headers: Singleton<Record<string, string>> = new Singleton(() =>
       headers_to_object(request.headers),
     );
-    const body: string = await get_text_body(request);
-    const password: IEncryptionPassword =
-      typeof param === "function"
-        ? param({ headers: headers.get(), body, direction: "decode" })
-        : param;
+    const raw: Uint8Array = await get_binary_body(request);
+    if (raw.length === 0) return;
 
     // PARSE AND VALIDATE DATA
-    const data: any = JSON.parse(decrypt(body, password.key, password.iv));
+    const password: IEncryptionPassword =
+      typeof param === "function"
+        ? param({ headers: headers.get(), body: raw, direction: "decode" })
+        : param;
+    const data: any = JSON.parse(
+      new TextDecoder().decode(decrypt(raw, password.key, password.iv)),
+    );
     const error: Error | null = checker(data);
     if (error !== null) throw error;
     return data;
@@ -82,7 +87,7 @@ Object.assign(EncryptedBody, validate);
 /**
  * @internal
  */
-const decrypt = (body: string, key: string, iv: string): string => {
+const decrypt = (body: Uint8Array, key: string, iv: string): Uint8Array => {
   try {
     return AesPkcs5.decrypt(body, key, iv);
   } catch (exp) {
@@ -94,9 +99,9 @@ const decrypt = (body: string, key: string, iv: string): string => {
   }
 };
 
-const isTextPlain = (text?: string): boolean =>
+const isApplicationOctetStream = (text?: string): boolean =>
   text !== undefined &&
   text
     .split(";")
     .map((str) => str.trim())
-    .some((str) => str === "text/plain");
+    .some((str) => str === "application/octet-stream");

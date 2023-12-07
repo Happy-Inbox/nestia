@@ -54,6 +54,7 @@ export namespace IFetchRoute {
   export interface IBody {
     type:
       | "application/json"
+      | "application/octet-stream"
       | "application/x-www-form-urlencoded"
       | "text/plain";
     encrypted?: boolean;
