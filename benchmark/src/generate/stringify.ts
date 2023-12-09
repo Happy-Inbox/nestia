@@ -14,6 +14,7 @@ const FEATURES: string[] = [
 const CLIENTS: BenchmarkProgrammer.ILibrary[] = [
     "nestia (express)",
     "nestia (fastify)",
+    "nestia (encrypt)",
     "NestJS (express)",
     "NestJS (fastify)",
     "fastify",
@@ -98,6 +99,33 @@ const SERVERS: BenchmarkProgrammer.ILibrary[] = [
             ].join("\n");
         },
     })),
+    {
+        name: "nestia (encrypt)",
+        body: (type: string) => {
+            const program: string = `createNestExpressStringifyProgram`;
+            return [
+                `import core from "@nestia/core";`,
+                ``,
+                `import { Collection } from "../../../../structures/pure/Collection";`,
+                `import { ${type} } from "../../../../structures/pure/${type}";`,
+                `import { ${program} } from "../${program}";`,
+                ``,
+                `${program}(false)(37_032)((input: Collection<${type}>) => {`,
+                `    @core.EncryptedController("", {`,
+                `        key: "a".repeat(16),`,
+                `        iv: "b".repeat(16),`,
+                `    })`,
+                `    class NestiaController {`,
+                `        @core.EncryptedRoute.Get("stringify")`,
+                `        public stringify(): Collection<${type}> {`,
+                `            return input;`,
+                `        }`,
+                `    }`,
+                `    return NestiaController;`,
+                `});`,
+            ].join("\n");
+        },
+    },
     {
         name: "fastify",
         body: (type: string) => {
