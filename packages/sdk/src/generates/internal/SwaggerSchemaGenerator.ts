@@ -139,7 +139,7 @@ export namespace SwaggerSchemaGenerator {
         describe(route, "return") ?? describe(route, "returns");
       output[status] = {
         description: route.encrypted
-          ? `${warning.get(!!description).get("response", route.method)}${
+          ? `${warning.get(!!description, "response", route.method)}${
               description ?? ""
             }`
           : description ?? "",
@@ -198,7 +198,7 @@ export namespace SwaggerSchemaGenerator {
       const schema: IJsonSchema = coalesce(props)(result);
       return {
         description: encrypted
-          ? `${warning.get(!!description).get("request")}${description ?? ""}`
+          ? `${warning.get(!!description, "request")}${description ?? ""}`
           : description,
         content: {
           [contentType]: {
