@@ -371,8 +371,7 @@ export namespace SwaggerSchemaGenerator {
 }
 
 const warning = new VariadicSingleton(
-  (described: boolean) =>
-    new Singleton((type: "request" | "response", method?: string) => {
+  (described: boolean, type: "request" | "response", method?: string) => {
       const summary =
         type === "request"
           ? "Request body must be encrypted."
@@ -395,8 +394,7 @@ const warning = new VariadicSingleton(
       ];
       if (described === true) content.push("", "----------------", "", "");
       return content.join("\n");
-    }),
-);
+  });
 
 const any = new Singleton(() =>
   Metadata.from(
