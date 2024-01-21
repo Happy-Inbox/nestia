@@ -62,4 +62,3 @@ export function TypedParam<T extends boolean | bigint | number | string | null>(
     }
   })(name);
 }
-Object.assign(TypedParam, typia.http.parameter);

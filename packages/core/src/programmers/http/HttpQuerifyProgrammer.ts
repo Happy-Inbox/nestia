@@ -3,7 +3,7 @@ import { IdentifierFactory } from "typia/lib/factories/IdentifierFactory";
 import { MetadataCollection } from "typia/lib/factories/MetadataCollection";
 import { MetadataFactory } from "typia/lib/factories/MetadataFactory";
 import { StatementFactory } from "typia/lib/factories/StatementFactory";
-import { FunctionImporter } from "typia/lib/programmers/helpers/FunctionImporeter";
+import { FunctionImporter } from "typia/lib/programmers/helpers/FunctionImporter";
 import { HttpQueryProgrammer } from "typia/lib/programmers/http/HttpQueryProgrammer";
 import { Metadata } from "typia/lib/schemas/metadata/Metadata";
 import { MetadataObject } from "typia/lib/schemas/metadata/MetadataObject";
@@ -38,7 +38,7 @@ export namespace HttpQuerifyProgrammer {
         undefined,
         ts.factory.createBlock(
           [
-            ...importer.declare(modulo),
+            ...importer.declare(),
             StatementFactory.constant(
               "output",
               ts.factory.createNewExpression(
