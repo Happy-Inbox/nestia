@@ -1,5 +1,3 @@
-import import2 from "import2";
-
 import { HttpError } from "../HttpError";
 import { IConnection } from "../IConnection";
 import { IPropagation } from "../IPropagation";
@@ -180,7 +178,6 @@ const polyfill = new Singleton(async (): Promise<typeof fetch> => {
     typeof global.process.versions === "object" &&
     typeof global.process.versions.node !== undefined
   ) {
-    global.fetch ??= ((await import2("node-fetch")) as any).default;
     return (global as any).fetch;
   }
   return window.fetch;
