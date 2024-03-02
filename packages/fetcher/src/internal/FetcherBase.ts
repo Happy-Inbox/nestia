@@ -124,7 +124,7 @@ export namespace FetcherBase {
       // DO FETCH
       const response: Response = await (
         connection.fetch ?? (await polyfill.get())
-      )(url.href, init);
+      )(url.href.endsWith("/") ? url.href.slice(0, url.href.length - 1) : url.href, init);
 
       // CONSTRUCT RESULT DATA
       const result: IPropagation<any, any> = {
