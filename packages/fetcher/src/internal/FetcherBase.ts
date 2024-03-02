@@ -221,11 +221,11 @@ const response_headers_to_object = (
   headers: Headers,
 ): Record<string, string | string[]> => {
   const output: Record<string, string | string[]> = {};
-  headers.forEach((value, key) => {
+  headers.forEach((value: string, key: string) => {
     if (key === "set-cookie") {
       output[key] ??= [];
       (output[key] as string[]).push(
-        ...value.split(";").map((str) => str.trim()),
+        ...value.split(";").map((str: string) => str.trim()),
       );
     } else output[key] = value;
   });
